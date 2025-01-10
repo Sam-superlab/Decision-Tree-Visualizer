@@ -14,7 +14,7 @@ class TreeVisualizer:
 
     def plot_step(self, X: np.ndarray, y: np.ndarray, node_info: 'NodeInfo',
                   show_decision_boundary: bool = True) -> None:
-        """绘制决策树生长的某一步骤"""
+        """Plot one step of decision tree growth"""
         if self.fig is None:
             self.fig, (self.ax_tree, self.ax_space) = plt.subplots(
                 1, 2, figsize=(15, 6))
@@ -24,7 +24,7 @@ class TreeVisualizer:
         plt.tight_layout()
 
     def _plot_tree_structure(self, node_info: 'NodeInfo') -> None:
-        """使用networkx绘制树结构"""
+        """Draw tree structure using networkx"""
         self.ax_tree.clear()
         G = nx.DiGraph()
 
@@ -34,7 +34,7 @@ class TreeVisualizer:
 
             node_id = f"d{node.depth}_s{node.samples}"
 
-            # 添加节点标签
+            # Add node label
             label = f"samples={node.samples}\n"
             label += f"gini={node.gini:.3f}\n"
             if node.is_leaf:
@@ -57,38 +57,38 @@ class TreeVisualizer:
         nx.draw(G, pos, ax=self.ax_tree, with_labels=True,
                 node_color='lightblue', node_size=2000)
 
-        # 添加节点标签
+        # Add node labels
         labels = nx.get_node_attributes(G, 'label')
         nx.draw_networkx_labels(G, pos, labels, ax=self.ax_tree)
 
     def _plot_feature_space(self, X: np.ndarray, y: np.ndarray,
                             node_info: 'NodeInfo',
                             show_decision_boundary: bool = True) -> None:
-        """绘制特征空间划分"""
+        """Draw feature space partitioning"""
         self.ax_space.clear()
 
-        # 绘制散点图
+        # Draw scatter plot
         scatter = self.ax_space.scatter(X[:, 0], X[:, 1], c=y,
                                         cmap=self.cmap, alpha=0.6)
 
         if show_decision_boundary:
-            # 创建网格以绘制决策边界
+            # Create grid for decision boundary
             x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
             y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
             xx, yy = np.meshgrid(np.linspace(x_min, x_max, 100),
                                  np.linspace(y_min, y_max, 100))
 
-            # 获取当前节点的预测
+            # Get current node prediction
             if not node_info.is_leaf:
                 if node_info.feature_idx == 0:
                     Z = xx <= node_info.threshold
                 else:
                     Z = yy <= node_info.threshold
 
-                # 绘制决策边界
+                # Draw decision boundary
                 self.ax_space.contourf(xx, yy, Z, alpha=0.2, cmap=self.cmap)
 
-                # 绘制分割线
+                # Draw split line
                 if node_info.feature_idx == 0:
                     self.ax_space.axvline(x=node_info.threshold,
                                           color='r', linestyle='--')
@@ -96,14 +96,14 @@ class TreeVisualizer:
                     self.ax_space.axhline(y=node_info.threshold,
                                           color='r', linestyle='--')
 
-        # 设置图表属性
+        # Set plot properties
         self.ax_space.set_title(
             f'Depth: {node_info.depth}, Samples: {node_info.samples}\n'
             f'Gini: {node_info.gini:.3f}')
         self.ax_space.set_xlabel('Feature 0')
         self.ax_space.set_ylabel('Feature 1')
 
-        # 添加图例
+        # Add legend
         legend1 = self.ax_space.legend(*scatter.legend_elements(),
                                        loc="upper right", title="Classes")
         self.ax_space.add_artist(legend1)

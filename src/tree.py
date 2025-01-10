@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Dict
 
 @dataclass
 class NodeInfo:
-    """记录节点信息，用于可视化"""
+    """Node information for visualization"""
     depth: int
     samples: int
     feature_idx: Optional[int]
@@ -15,7 +15,7 @@ class NodeInfo:
     prediction: Optional[int]
     left_child: Optional['NodeInfo']
     right_child: Optional['NodeInfo']
-    samples_indices: np.ndarray  # 保存该节点包含的样本索引，用于可视化
+    samples_indices: np.ndarray  # Store sample indices for visualization
 
 
 class DecisionTreeVisualizer:
@@ -28,21 +28,21 @@ class DecisionTreeVisualizer:
         self.root: Optional[NodeInfo] = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
-        """训练决策树并记录过程"""
+        """Train decision tree and record process"""
         self.history = []
         self.root = self._build_tree(
             X, y, depth=0, sample_indices=np.arange(len(y)))
 
     def _build_tree(self, X: np.ndarray, y: np.ndarray, depth: int,
                     sample_indices: np.ndarray) -> NodeInfo:
-        """递归构建决策树"""
+        """Recursively build decision tree"""
         n_samples = len(y)
 
-        # 计算当前节点的不纯度
+        # Calculate current node impurity
         current_gini = self._calculate_gini(y) if self.criterion == 'gini' else \
             self._calculate_entropy(y)
 
-        # 检查终止条件
+        # Check termination conditions
         is_leaf = (depth >= self.max_depth or
                    n_samples < self.min_samples_split or
                    len(np.unique(y)) == 1)
@@ -60,20 +60,20 @@ class DecisionTreeVisualizer:
             samples_indices=sample_indices
         )
 
-        # 记录当前节点状态
+        # Record current node state
         self.history.append(node)
 
         if not is_leaf:
-            # 寻找最佳分割
+            # Find best split
             feature_idx, threshold, _ = self._find_best_split(X, y)
             node.feature_idx = feature_idx
             node.threshold = threshold
 
-            # 划分数据
+            # Split data
             left_mask = X[:, feature_idx] <= threshold
             right_mask = ~left_mask
 
-            # 递归构建左右子树
+            # Recursively build left and right subtrees
             left_indices = sample_indices[left_mask]
             right_indices = sample_indices[right_mask]
 
@@ -85,7 +85,7 @@ class DecisionTreeVisualizer:
         return node
 
     def _calculate_entropy(self, y: np.ndarray) -> float:
-        """计算信息熵"""
+        """Calculate entropy"""
         if len(y) == 0:
             return 0.0
         classes, counts = np.unique(y, return_counts=True)
@@ -93,7 +93,7 @@ class DecisionTreeVisualizer:
         return -np.sum(probabilities * np.log2(probabilities))
 
     def get_history(self) -> List[dict]:
-        """将训练历史转换为可序列化的格式"""
+        """Convert training history to serializable format"""
         def serialize_node(node: NodeInfo) -> dict:
             node_dict = {
                 'depth': node.depth,
@@ -120,7 +120,7 @@ class DecisionTreeVisualizer:
         return serialized_history
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """预测样本属于每个类的概率"""
+        """Predict class probabilities for samples"""
         def _predict_single(node: NodeInfo, x: np.ndarray) -> np.ndarray:
             if node.is_leaf:
                 return node.prediction
@@ -132,6 +132,7 @@ class DecisionTreeVisualizer:
         return np.array([_predict_single(self.root, x) for x in X])
 
     def _calculate_gini(self, y: np.ndarray) -> float:
+        """Calculate Gini impurity"""
         if len(y) == 0:
             return 0.0
         classes, counts = np.unique(y, return_counts=True)
@@ -139,6 +140,7 @@ class DecisionTreeVisualizer:
         return 1 - np.sum(probabilities ** 2)
 
     def _find_best_split(self, X: np.ndarray, y: np.ndarray) -> Tuple[int, float, float]:
+        """Find best feature and threshold for splitting"""
         best_gini = float('inf')
         best_feature = -1
         best_threshold = 0.0
@@ -155,7 +157,7 @@ class DecisionTreeVisualizer:
                 left_gini = self._calculate_gini(y[left_mask])
                 right_gini = self._calculate_gini(y[right_mask])
 
-                # 计算加权基尼系数
+                # Calculate weighted Gini impurity
                 n_left = np.sum(left_mask)
                 n_right = np.sum(right_mask)
                 n_total = len(y)

@@ -22,16 +22,16 @@ def index():
 
 @app.route('/api/train')
 def train():
-    # 获取参数
+    # Get parameters
     dataset_name = request.args.get('dataset', 'moons')
     max_depth = int(request.args.get('max_depth', 3))
     min_samples_split = int(request.args.get('min_samples_split', 2))
     criterion = request.args.get('criterion', 'gini')
 
-    # 生成数据
+    # Generate data
     X, y = DATASETS[dataset_name]()
 
-    # 训练决策树
+    # Train decision tree
     tree = DecisionTreeVisualizer(
         max_depth=max_depth,
         min_samples_split=min_samples_split,
@@ -39,7 +39,7 @@ def train():
     )
     tree.fit(X, y)
 
-    # 获取训练历史
+    # Get training history
     history = tree.get_history()
 
     return jsonify({
